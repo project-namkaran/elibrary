@@ -2,6 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role: 'user' | 'admin';
   avatar?: string;
   joinedDate: string;
   borrowedBooks: string[];

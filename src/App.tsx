@@ -19,10 +19,19 @@ const AppContent: React.FC = () => {
   const { isAuthenticated } = useUser();
 
   const handleViewChange = (view: string) => {
-    if (['dashboard', 'profile', 'exchange', 'settings'].includes(view) && !isAuthenticated) {
+    const authRequiredViews = ['dashboard', 'profile', 'exchange', 'settings'];
+    const adminRequiredViews = ['admin'];
+    
+    if (authRequiredViews.includes(view) && !isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
+    
+    if (adminRequiredViews.includes(view) && (!isAuthenticated || user?.role !== 'admin')) {
+      setShowAuthModal(true);
+      return;
+    }
+    
     setCurrentView(view);
     setSelectedBook(null);
     setReaderMode(false);
@@ -171,7 +180,7 @@ const AppContent: React.FC = () => {
             )}
 
             {/* Admin Panel View */}
-            {currentView === 'admin' && isAuthenticated && (
+            {currentView === 'admin' && isAuthenticated && user?.role === 'admin' && (
               <div className="text-center py-12">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Panel</h2>
                 <p className="text-gray-600 mb-8">Manage books, users, and system settings</p>
@@ -181,6 +190,25 @@ const AppContent: React.FC = () => {
                     book catalog management, and system analytics.
                   </p>
                 </div>
+              </div>
+            )}
+
+            {/* Unauthorized Access */}
+            {currentView === 'admin' && isAuthenticated && user?.role !== 'admin' && (
+              <div className="text-center py-12">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+                <p className="text-gray-600 mb-8">You don't have permission to access the admin panel</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+                  <p className="text-red-800">
+                    Admin access is required to view this section. Please contact your administrator.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleViewChange('library')}
+                  className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Return to Library
+                </button>
               </div>
             )}
           </div>

@@ -159,6 +159,20 @@ export const Header: React.FC<HeaderProps> = ({
                           <User className="h-4 w-4 mr-3" />
                           Profile
                         </button>
+                        
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => {
+                              onViewChange('admin');
+                              setShowUserMenu(false);
+                            }}
+                            className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          >
+                            <Settings className="h-4 w-4 mr-3" />
+                            Admin Panel
+                          </button>
+                        )}
+                        
                         <button
                           onClick={() => {
                             onViewChange('settings');

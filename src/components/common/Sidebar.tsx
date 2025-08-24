@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onClose();
   };
 
-  const isAdmin = user?.email === 'admin@example.com'; // Simple admin check
+  const isAdmin = user?.role === 'admin';
 
   return (
     <>
@@ -159,9 +159,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                  <div className="flex items-center space-x-2">
                   <p className="text-xs text-gray-500">
                     Member since {new Date(user.joinedDate).getFullYear()}
                   </p>
+                    {user.role === 'admin' && (
+                      <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded-full font-medium">
+                        Admin
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { X, Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 
 interface AuthModalProps {
@@ -17,12 +17,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const { login, signup } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
@@ -30,15 +32,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       
       if (isLogin) {
         success = await login(formData.email, formData.password);
+        if (!success) {
+          setError('Invalid email or password. Please try again.');
+        }
       } else {
         success = await signup(formData.name, formData.email, formData.password);
+        if (!success) {
+          setError('Account creation failed. Email may already be in use.');
+        } else {
+          setSuccess('Account created successfully! Welcome to E-Library.');
+        }
       }
 
       if (success) {
-        onClose();
-        setFormData({ name: '', email: '', password: '' });
-      } else {
-        setError('Authentication failed. Please try again.');
+        setTimeout(() => {
+          onClose();
+          setFormData({ name: '', email: '', password: '' });
+          setSuccess('');
+        }, 1500);
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -75,8 +86,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center">
+              <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center">
+              <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span>{success}</span>
             </div>
           )}
 
@@ -161,6 +180,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 text-center">
+          {/* Demo Credentials */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
+            <h4 className="text-sm font-semibold text-blue-800 mb-2">Demo Credentials:</h4>
+            <div className="text-xs text-blue-700 space-y-1">
+              <div><strong>User:</strong> john.doe@example.com / user123</div>
+              <div><strong>Admin:</strong> admin@elibrary.com / admin123</div>
+            </div>
+          </div>
+          
           <p className="text-sm text-gray-600">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button
