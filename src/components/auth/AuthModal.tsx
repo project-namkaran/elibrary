@@ -28,6 +28,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
+      // Basic validation
+      if (!formData.email.trim()) {
+        setError('Email is required.');
+        return;
+      }
+      
+      if (!formData.password.trim()) {
+        setError('Password is required.');
+        return;
+      }
+      
+      if (!isLogin && !formData.name.trim()) {
+        setError('Name is required.');
+        return;
+      }
+      
+      if (!isLogin && formData.password.length < 6) {
+        setError('Password must be at least 6 characters long.');
+        return;
+      }
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+
       let success = false;
       
       if (isLogin) {
@@ -38,7 +66,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       } else {
         try {
           success = await signup(formData.name, formData.email, formData.password);
-          setSuccess('Account created successfully! Welcome to E-Library.');
+          if (success) {
+            setSuccess('Account created successfully! Welcome to E-Library.');
+          }
         } catch (signupError) {
           setError(signupError instanceof Error ? signupError.message : 'Account creation failed. Please try again.');
           success = false;
@@ -50,19 +80,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           onClose();
           setFormData({ name: '', email: '', password: '' });
           setSuccess('');
+          setError('');
         }, 1500);
       }
     } catch (err) {
+      console.error('Auth error:', err);
       if (isLogin) {
         setError('An error occurred during sign in. Please try again.');
+      } else {
+        setError('An error occurred during account creation. Please try again.');
       }
-      // Signup errors are already handled above
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clear errors when user starts typing
+    if (error) {
+      setError('');
+    }
+    
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value

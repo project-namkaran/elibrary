@@ -165,6 +165,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       if (!email || !password) {
+        console.error('Login failed: Missing email or password');
         return false;
       }
 
@@ -176,6 +177,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (authError || !authData.user) {
         console.error('Auth error:', authError);
+        
+        // Handle specific auth errors
+        if (authError?.message === 'Invalid login credentials') {
+          console.error('Invalid credentials provided');
+        }
+        
         return false;
       }
 
@@ -188,6 +195,35 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (userError || !userData) {
         console.error('User data error:', userError);
+        
+        // If user doesn't exist in users table, try to create it
+        if (userError?.code === 'PGRST116') {
+          console.log('User profile not found, creating...');
+          
+          const { data: newUserData, error: createError } = await supabase
+            .from('users')
+            .insert([
+              {
+                id: authData.user.id,
+                name: authData.user.user_metadata?.name || authData.user.email?.split('@')[0] || 'User',
+                email: authData.user.email || email.toLowerCase(),
+                role: authData.user.user_metadata?.role || 'user'
+              }
+            ])
+            .select()
+            .single();
+            
+          if (createError || !newUserData) {
+            console.error('Failed to create user profile:', createError);
+            await supabase.auth.signOut();
+            return false;
+          }
+          
+          const userProfile = dbUserToUser(newUserData, []);
+          setUser(userProfile);
+          return true;
+        }
+        
         await supabase.auth.signOut();
         return false;
       }
@@ -219,18 +255,34 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw new Error('Please fill in all required fields.');
       }
 
+      if (password.length < 6) {
+        throw new Error('Password must be at least 6 characters long.');
+      }
+
       // Sign up with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase(),
-        password: password
+        password: password,
+        options: {
+          data: {
+            name: name.trim(),
+            role: 'user'
+          }
+        }
       });
 
       if (authError || !authData.user) {
         if (authError?.message === 'User already registered') {
           throw new Error('An account with this email already exists. Please sign in instead.');
         }
+        if (authError?.message.includes('Invalid email')) {
+          throw new Error('Please enter a valid email address.');
+        }
         throw new Error('Account creation failed. Please try again.');
       }
+
+      // Wait a moment for the auth user to be fully created
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Create user profile in users table
       const { data: userData, error: userError } = await supabase
@@ -247,9 +299,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .single();
 
       if (userError || !userData) {
+        console.error('User profile creation error:', userError);
         // Clean up auth user if profile creation failed
-        await supabase.auth.signOut();
-        throw new Error('Failed to create user profile. Please try again.');
+        try {
+          await supabase.auth.signOut();
+        } catch (cleanupError) {
+          console.error('Cleanup error:', cleanupError);
+        }
+        
+        if (userError?.code === '23505') {
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        }
+        
+        throw new Error(`Failed to create user profile: ${userError?.message || 'Unknown error'}`);
       }
 
       const userProfile = dbUserToUser(userData, []);
@@ -257,6 +319,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       return true;
     } catch (error) {
+      console.error('Signup error:', error);
       throw error;
     }
   };
