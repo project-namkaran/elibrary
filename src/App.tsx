@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
 import { AuthModal } from './components/auth/AuthModal';
@@ -9,6 +9,7 @@ import { BookReader } from './components/library/BookReader';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { UserProvider, useUser } from './context/UserContext';
 import { BookProvider } from './context/BookContext';
+import { supabase } from './lib/supabase';
 import { Book } from './types';
 
 const AppContent: React.FC = () => {
@@ -17,10 +18,48 @@ const AppContent: React.FC = () => {
   const [readerMode, setReaderMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const { isAuthenticated } = useUser();
 
   const { user } = useUser();
+
+  // Check for existing auth session on app load
+  useEffect(() => {
+    const checkAuthSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // User is already logged in, but we need to load their profile
+          // The UserContext will handle this through the auth state change listener
+        }
+      } catch (error) {
+        console.error('Error checking auth session:', error);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuthSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          // Handle sign out
+          setAuthLoading(false);
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          // Handle sign in - UserContext will load the profile
+          setAuthLoading(false);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleViewChange = (view: string) => {
     const authRequiredViews = ['dashboard', 'profile', 'exchange', 'settings'];
@@ -70,6 +109,19 @@ const AppContent: React.FC = () => {
     setReaderMode(false);
     setCurrentView('book-details');
   };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading...</h3>
+          <p className="text-gray-600">Checking authentication status</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show reader in full screen
   if (readerMode && selectedBook) {
