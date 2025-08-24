@@ -9,7 +9,6 @@ import { BookReader } from './components/library/BookReader';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { UserProvider, useUser } from './context/UserContext';
 import { BookProvider } from './context/BookContext';
-import { ResetPasswordForm } from './components/auth/ResetPasswordForm';
 import { supabase } from './lib/supabase';
 import { Book } from './types';
 
@@ -23,10 +22,6 @@ const AppContent: React.FC = () => {
 
   const { isAuthenticated } = useUser();
   
-  // Check if we're on the reset password page
-  const isResetPasswordPage = window.location.pathname === '/reset-password' || 
-                              window.location.hash.includes('type=recovery');
-
   const { user } = useUser();
 
   // Check for existing auth session on app load
@@ -125,22 +120,6 @@ const AppContent: React.FC = () => {
           <p className="text-gray-600">Checking authentication status</p>
         </div>
       </div>
-    );
-  }
-
-  // Show reset password form if we're on the reset password page
-  if (isResetPasswordPage) {
-    return (
-      <ResetPasswordForm
-        onSuccess={() => {
-          // Redirect to main app after successful password reset
-          window.location.href = '/';
-        }}
-        onCancel={() => {
-          // Redirect to main app if user cancels
-          window.location.href = '/';
-        }}
-      />
     );
   }
 

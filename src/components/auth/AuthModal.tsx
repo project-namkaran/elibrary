@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
-import { ForgotPasswordModal } from './ForgotPasswordModal';
+import { OTPModal } from './OTPModal';
+import { ResetPasswordWithOTP } from './ResetPasswordWithOTP';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,7 +20,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otpType, setOtpType] = useState<'verification' | 'reset'>('verification');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   const { login, signup } = useUser();
 
@@ -69,7 +73,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         try {
           success = await signup(formData.name, formData.email, formData.password);
           if (success) {
-            setSuccess('Account created successfully! Welcome to E-Library.');
+            // Show OTP modal for email verification
+            setResetEmail(formData.email);
+            setOtpType('verification');
+            setShowOTPModal(true);
+            return; // Don't close modal yet
           }
         } catch (signupError) {
           setError(signupError instanceof Error ? signupError.message : 'Account creation failed. Please try again.');
@@ -109,16 +117,98 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }));
   };
 
+  const handleForgotPassword = () => {
+    if (!formData.email.trim()) {
+      setError('Please enter your email address first.');
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    setResetEmail(formData.email);
+    setOtpType('reset');
+    setShowOTPModal(true);
+  };
+
+  const handleOTPSuccess = () => {
+    setShowOTPModal(false);
+    
+    if (otpType === 'verification') {
+      setSuccess('Email verified successfully! Welcome to E-Library.');
+      setTimeout(() => {
+        onClose();
+        setFormData({ name: '', email: '', password: '' });
+        setSuccess('');
+        setError('');
+      }, 1500);
+    } else {
+      // Show password reset form
+      setShowResetPassword(true);
+    }
+  };
+
+  const handleResetSuccess = () => {
+    setShowResetPassword(false);
+    setSuccess('Password updated successfully! You can now sign in.');
+    setTimeout(() => {
+      onClose();
+      setFormData({ name: '', email: '', password: '' });
+      setSuccess('');
+      setError('');
+      setResetEmail('');
+    }, 1500);
+  };
+
+  const handleBackToAuth = () => {
+    setShowOTPModal(false);
+    setShowResetPassword(false);
+    setResetEmail('');
+    setError('');
+  };
+
   if (!isOpen) return null;
 
-  // Show forgot password modal
-  if (showForgotPassword) {
+  // Show OTP modal
+  if (showOTPModal) {
     return (
-      <ForgotPasswordModal
+      <OTPModal
         isOpen={true}
         onClose={onClose}
-        onBackToLogin={() => setShowForgotPassword(false)}
+        onBackToAuth={handleBackToAuth}
+        email={resetEmail}
+        type={otpType}
+        onSuccess={handleOTPSuccess}
       />
+    );
+  }
+
+  // Show reset password form
+  if (showResetPassword) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900">Reset Password</h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-400" />
+            </button>
+          </div>
+          <div className="p-6">
+            <ResetPasswordWithOTP
+              email={resetEmail}
+              onSuccess={handleResetSuccess}
+              onBack={handleBackToAuth}
+            />
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -228,7 +318,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <div className="flex justify-end mb-4">
               <button
                 type="button"
-                onClick={() => setShowForgotPassword(true)}
+                onClick={handleForgotPassword}
                 className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
               >
                 Forgot your password?
@@ -252,9 +342,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <h4 className="text-sm font-semibold text-blue-800 mb-2">Authentication Info:</h4>
             <div className="text-xs text-blue-700">
               {isLogin ? (
-                <p>Sign in with your registered email and password.</p>
+                <div>
+                  <p>Sign in with your registered email and password.</p>
+                  <p className="mt-1">Forgot password? Enter your email and click "Forgot your password?" to receive an OTP.</p>
+                </div>
               ) : (
-                <p>Create a new account to access the library features.</p>
+                <div>
+                  <p>Create a new account to access the library features.</p>
+                  <p className="mt-1">You'll receive an OTP to verify your email address.</p>
+                </div>
               )}
             </div>
           </div>
