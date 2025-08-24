@@ -20,7 +20,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ onViewChange, onBookSelect }) => {
   const { user } = useUser();
-  const { books, getBookById } = useBooks();
+  const { books, loading, getBookById } = useBooks();
 
   const currentlyReading = user?.currentlyReading
     ? getBookById(user.currentlyReading.bookId)
@@ -170,7 +170,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewChange, onBookSelect
           </div>
           
           <div className="space-y-3">
-            {recentBooks.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-sm text-gray-500">Loading books...</p>
+              </div>
+            ) : recentBooks.length > 0 ? (
               recentBooks.map((book) => (
                 <div
                   key={book.id}

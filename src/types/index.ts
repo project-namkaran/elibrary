@@ -27,7 +27,7 @@ export interface Book {
   reviews: number;
   type: 'free' | 'paid' | 'physical';
   price?: number;
-  isAvailable?: boolean;
+  isAvailable?: boolean; // This maps to is_available in database
   publishedDate: string;
   pages?: number;
   isbn?: string;

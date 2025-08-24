@@ -19,12 +19,14 @@ interface AddBookFormProps {
   onSave: (book: Omit<Book, 'id'>) => void;
   onCancel: () => void;
   editingBook?: Book | null;
+  loading?: boolean;
 }
 
 export const AddBookForm: React.FC<AddBookFormProps> = ({
   onSave,
   onCancel,
-  editingBook
+  editingBook,
+  loading: externalLoading = false
 }) => {
   const [formData, setFormData] = useState({
     title: editingBook?.title || '',
@@ -43,7 +45,6 @@ export const AddBookForm: React.FC<AddBookFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const validateForm = () => {
@@ -99,12 +100,9 @@ export const AddBookForm: React.FC<AddBookFormProps> = ({
       return;
     }
 
-    setLoading(true);
     setSuccess(false);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const bookData: Omit<Book, 'id'> = {
         title: formData.title.trim(),
@@ -124,7 +122,7 @@ export const AddBookForm: React.FC<AddBookFormProps> = ({
         content: formData.content.trim() ? formData.content.split('\n').filter(line => line.trim()) : undefined
       };
 
-      onSave(bookData);
+      await onSave(bookData);
       setSuccess(true);
 
       // Reset form after successful save (only for new books)
@@ -157,8 +155,6 @@ export const AddBookForm: React.FC<AddBookFormProps> = ({
 
     } catch (error) {
       setErrors({ submit: 'Failed to save book. Please try again.' });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -541,10 +537,10 @@ export const AddBookForm: React.FC<AddBookFormProps> = ({
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={externalLoading}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
           >
-            {loading ? (
+            {externalLoading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Saving...

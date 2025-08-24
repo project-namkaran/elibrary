@@ -15,12 +15,13 @@ import { useBooks } from '../../context/BookContext';
 import { AddBookForm } from './AddBookForm';
 
 export const BookManagement: React.FC = () => {
-  const { books, addBook, updateBook, deleteBook } = useBooks();
+  const { books, loading, error, addBook, updateBook, deleteBook } = useBooks();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [selectedBooks, setSelectedBooks] = useState<string[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const filteredBooks = books.filter(book => {
     const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -29,30 +30,57 @@ export const BookManagement: React.FC = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const handleAddBook = (bookData: Omit<Book, 'id'>) => {
-    addBook(bookData);
-    setShowAddForm(false);
+  const handleAddBook = async (bookData: Omit<Book, 'id'>) => {
+    setActionLoading('add');
+    const success = await addBook(bookData);
+    setActionLoading(null);
+    
+    if (success) {
+      setShowAddForm(false);
+    }
   };
 
-  const handleEditBook = (bookData: Omit<Book, 'id'>) => {
+  const handleEditBook = async (bookData: Omit<Book, 'id'>) => {
     if (editingBook) {
-      updateBook(editingBook.id, bookData);
-      setEditingBook(null);
+      setActionLoading('edit');
+      const success = await updateBook(editingBook.id, bookData);
+      setActionLoading(null);
+      
+      if (success) {
+        setEditingBook(null);
+      }
     }
   };
 
-  const handleDeleteBook = (bookId: string) => {
+  const handleDeleteBook = async (bookId: string) => {
     if (confirm('Are you sure you want to delete this book?')) {
-      deleteBook(bookId);
+      setActionLoading(bookId);
+      const success = await deleteBook(bookId);
+      setActionLoading(null);
+      
+      if (!success) {
+        alert('Failed to delete book. Please try again.');
+      }
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedBooks.length === 0) return;
     
     if (confirm(`Are you sure you want to delete ${selectedBooks.length} selected books?`)) {
-      selectedBooks.forEach(bookId => deleteBook(bookId));
-      setSelectedBooks([]);
+      setActionLoading('bulk');
+      
+      const deletePromises = selectedBooks.map(bookId => deleteBook(bookId));
+      const results = await Promise.all(deletePromises);
+      
+      setActionLoading(null);
+      
+      const successCount = results.filter(Boolean).length;
+      if (successCount === selectedBooks.length) {
+        setSelectedBooks([]);
+      } else {
+        alert(`${successCount} of ${selectedBooks.length} books deleted successfully.`);
+      }
     }
   };
 
@@ -81,12 +109,23 @@ export const BookManagement: React.FC = () => {
           setEditingBook(null);
         }}
         editingBook={editingBook}
+        loading={actionLoading === 'add' || actionLoading === 'edit'}
       />
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>Error: {error}</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -135,10 +174,20 @@ export const BookManagement: React.FC = () => {
             {selectedBooks.length > 0 && (
               <button
                 onClick={handleBulkDelete}
+                disabled={actionLoading === 'bulk'}
                 className="flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete ({selectedBooks.length})
+                {actionLoading === 'bulk' ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete ({selectedBooks.length})
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -147,6 +196,14 @@ export const BookManagement: React.FC = () => {
 
       {/* Books Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {loading && (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading books...</p>
+          </div>
+        )}
+        
+        {!loading && (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -261,6 +318,7 @@ export const BookManagement: React.FC = () => {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={() => setEditingBook(book)}
+                        disabled={actionLoading !== null}
                         className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                         title="Edit book"
                       >
@@ -268,10 +326,15 @@ export const BookManagement: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteBook(book.id)}
+                        disabled={actionLoading !== null}
                         className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                         title="Delete book"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {actionLoading === book.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
                   </td>
@@ -280,8 +343,9 @@ export const BookManagement: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
 
-        {filteredBooks.length === 0 && (
+        {!loading && filteredBooks.length === 0 && (
           <div className="text-center py-12">
             <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No books found</h3>
