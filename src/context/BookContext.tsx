@@ -152,22 +152,23 @@ export const BookProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .from('books')
         .update(dbBook)
         .eq('id', id)
-        .select()
-        .single();
+        .select();
 
       if (updateError) {
         throw updateError;
       }
 
-      if (data) {
-        const updatedBook = dbRowToBook(data);
+      if (data && data.length > 0) {
+        const updatedBook = dbRowToBook(data[0]);
         setBooks(prev => prev.map(book => 
           book.id === id ? updatedBook : book
         ));
         return true;
+      } else {
+        setError('Book not found or could not be updated');
+        return false;
       }
 
-      return false;
     } catch (err) {
       console.error('Error updating book:', err);
       setError(err instanceof Error ? err.message : 'Failed to update book');

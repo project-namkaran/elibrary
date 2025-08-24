@@ -8,7 +8,8 @@ import {
   Filter,
   MoreVertical,
   Star,
-  BookOpen
+  BookOpen,
+  AlertCircle
 } from 'lucide-react';
 import { Book } from '../../types';
 import { useBooks } from '../../context/BookContext';
