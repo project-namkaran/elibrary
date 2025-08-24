@@ -182,10 +182,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <div className="p-6 border-t border-gray-200 text-center">
           {/* Demo Credentials */}
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
-            <h4 className="text-sm font-semibold text-blue-800 mb-2">Demo Credentials:</h4>
-            <div className="text-xs text-blue-700 space-y-1">
-              <div><strong>User:</strong> john.doe@example.com / user123</div>
-              <div><strong>Admin:</strong> admin@elibrary.com / admin123</div>
+            <h4 className="text-sm font-semibold text-blue-800 mb-2">Authentication Info:</h4>
+            <div className="text-xs text-blue-700">
+              {isLogin ? (
+                <p>Sign in with your registered email and password.</p>
+              ) : (
+                <p>Create a new account to access the library features.</p>
+              )}
             </div>
           </div>
           
