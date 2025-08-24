@@ -226,7 +226,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (authError || !authData.user) {
-        console.error('Signup error:', authError);
         if (authError?.message === 'User already registered') {
           throw new Error('An account with this email already exists. Please sign in instead.');
         }
@@ -248,7 +247,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .single();
 
       if (userError || !userData) {
-        console.error('User creation error:', userError);
         // Clean up auth user if profile creation failed
         await supabase.auth.signOut();
         throw new Error('Failed to create user profile. Please try again.');
@@ -259,7 +257,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       return true;
     } catch (error) {
-      console.error('Signup error:', error);
       throw error;
     }
   };
