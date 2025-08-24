@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Grid, List, SortAsc } from 'lucide-react';
 import { Book } from '../../types';
-import { books, categories, genres } from '../../data/books';
+import { categories, genres } from '../../data/books';
+import { useBooks } from '../../context/BookContext';
 import { BookCard } from './BookCard';
 
 interface DigitalLibraryProps {
@@ -15,6 +16,7 @@ export const DigitalLibrary: React.FC<DigitalLibraryProps> = ({
   onBookRead,
   onBookPurchase
 }) => {
+  const { books } = useBooks();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedGenre, setSelectedGenre] = useState('All Genres');

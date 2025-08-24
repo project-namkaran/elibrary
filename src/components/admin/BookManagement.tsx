@@ -11,11 +11,11 @@ import {
   BookOpen
 } from 'lucide-react';
 import { Book } from '../../types';
-import { books as initialBooks } from '../../data/books';
+import { useBooks } from '../../context/BookContext';
 import { AddBookForm } from './AddBookForm';
 
 export const BookManagement: React.FC = () => {
-  const [books, setBooks] = useState<Book[]>(initialBooks);
+  const { books, addBook, updateBook, deleteBook } = useBooks();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,31 +30,20 @@ export const BookManagement: React.FC = () => {
   });
 
   const handleAddBook = (bookData: Omit<Book, 'id'>) => {
-    const newBook: Book = {
-      ...bookData,
-      id: Date.now().toString(),
-      rating: 0,
-      reviews: 0
-    };
-    
-    setBooks(prev => [newBook, ...prev]);
+    addBook(bookData);
     setShowAddForm(false);
   };
 
   const handleEditBook = (bookData: Omit<Book, 'id'>) => {
     if (editingBook) {
-      setBooks(prev => prev.map(book => 
-        book.id === editingBook.id 
-          ? { ...bookData, id: editingBook.id, rating: book.rating, reviews: book.reviews }
-          : book
-      ));
+      updateBook(editingBook.id, bookData);
       setEditingBook(null);
     }
   };
 
   const handleDeleteBook = (bookId: string) => {
     if (confirm('Are you sure you want to delete this book?')) {
-      setBooks(prev => prev.filter(book => book.id !== bookId));
+      deleteBook(bookId);
     }
   };
 
@@ -62,7 +51,7 @@ export const BookManagement: React.FC = () => {
     if (selectedBooks.length === 0) return;
     
     if (confirm(`Are you sure you want to delete ${selectedBooks.length} selected books?`)) {
-      setBooks(prev => prev.filter(book => !selectedBooks.includes(book.id)));
+      selectedBooks.forEach(bookId => deleteBook(bookId));
       setSelectedBooks([]);
     }
   };

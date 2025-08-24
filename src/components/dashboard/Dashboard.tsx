@@ -10,7 +10,7 @@ import {
   Target
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
-import { books } from '../../data/books';
+import { useBooks } from '../../context/BookContext';
 import { Book } from '../../types';
 
 interface DashboardProps {
@@ -20,9 +20,10 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ onViewChange, onBookSelect }) => {
   const { user } = useUser();
+  const { books, getBookById } = useBooks();
 
   const currentlyReading = user?.currentlyReading
-    ? books.find(book => book.id === user.currentlyReading?.bookId)
+    ? getBookById(user.currentlyReading.bookId)
     : null;
 
   const recentBooks = books.filter(book => 

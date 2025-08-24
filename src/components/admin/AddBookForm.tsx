@@ -127,25 +127,33 @@ export const AddBookForm: React.FC<AddBookFormProps> = ({
       onSave(bookData);
       setSuccess(true);
 
-      // Reset form after successful save
-      setTimeout(() => {
-        setFormData({
-          title: '',
-          author: '',
-          category: 'Technology',
-          genre: 'Non-Fiction',
-          description: '',
-          cover: '',
-          type: 'free',
-          price: '',
-          pages: '',
-          isbn: '',
-          publishedDate: new Date().toISOString().split('T')[0],
-          isAvailable: true,
-          content: ''
-        });
-        setSuccess(false);
-      }, 2000);
+      // Reset form after successful save (only for new books)
+      if (!editingBook) {
+        setTimeout(() => {
+          setFormData({
+            title: '',
+            author: '',
+            category: 'Technology',
+            genre: 'Non-Fiction',
+            description: '',
+            cover: '',
+            type: 'free',
+            price: '',
+            pages: '',
+            isbn: '',
+            publishedDate: new Date().toISOString().split('T')[0],
+            isAvailable: true,
+            content: ''
+          });
+          setSuccess(false);
+        }, 1500);
+      } else {
+        // For edits, just hide success message and close form
+        setTimeout(() => {
+          setSuccess(false);
+          onCancel();
+        }, 1500);
+      }
 
     } catch (error) {
       setErrors({ submit: 'Failed to save book. Please try again.' });

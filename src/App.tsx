@@ -8,6 +8,7 @@ import { BookDetails } from './components/library/BookDetails';
 import { BookReader } from './components/library/BookReader';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { UserProvider, useUser } from './context/UserContext';
+import { BookProvider } from './context/BookContext';
 import { Book } from './types';
 
 const AppContent: React.FC = () => {
@@ -221,7 +222,9 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <UserProvider>
-      <AppContent />
+      <BookProvider>
+        <AppContent />
+      </BookProvider>
     </UserProvider>
   );
 }
