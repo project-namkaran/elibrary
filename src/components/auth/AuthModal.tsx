@@ -36,11 +36,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           setError('Invalid email or password. Please try again.');
         }
       } else {
-        success = await signup(formData.name, formData.email, formData.password);
-        if (!success) {
-          setError('Account creation failed. Email may already be in use.');
-        } else {
+        try {
+          success = await signup(formData.name, formData.email, formData.password);
           setSuccess('Account created successfully! Welcome to E-Library.');
+        } catch (signupError) {
+          setError(signupError instanceof Error ? signupError.message : 'Account creation failed. Please try again.');
+          success = false;
         }
       }
 
@@ -52,7 +53,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         }, 1500);
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      if (isLogin) {
+        setError('An error occurred during sign in. Please try again.');
+      }
+      // Signup errors are already handled above
     } finally {
       setLoading(false);
     }

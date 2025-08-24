@@ -216,7 +216,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signup = async (name: string, email: string, password: string): Promise<boolean> => {
     try {
       if (!name || !email || !password) {
-        return false;
+        throw new Error('Please fill in all required fields.');
       }
 
       // Sign up with Supabase Auth
@@ -227,7 +227,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (authError || !authData.user) {
         console.error('Signup error:', authError);
-        return false;
+        if (authError?.message === 'User already registered') {
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        }
+        throw new Error('Account creation failed. Please try again.');
       }
 
       // Create user profile in users table
@@ -248,7 +251,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('User creation error:', userError);
         // Clean up auth user if profile creation failed
         await supabase.auth.signOut();
-        return false;
+        throw new Error('Failed to create user profile. Please try again.');
       }
 
       const userProfile = dbUserToUser(userData, []);
@@ -257,7 +260,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return true;
     } catch (error) {
       console.error('Signup error:', error);
-      return false;
+      throw error;
     }
   };
 
