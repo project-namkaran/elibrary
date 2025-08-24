@@ -6,6 +6,7 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { DigitalLibrary } from './components/library/DigitalLibrary';
 import { BookDetails } from './components/library/BookDetails';
 import { BookReader } from './components/library/BookReader';
+import { AdminPanel } from './components/admin/AdminPanel';
 import { UserProvider, useUser } from './context/UserContext';
 import { Book } from './types';
 
@@ -181,20 +182,11 @@ const AppContent: React.FC = () => {
 
             {/* Admin Panel View */}
             {currentView === 'admin' && isAuthenticated && user?.role === 'admin' && (
-              <div className="text-center py-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Panel</h2>
-                <p className="text-gray-600 mb-8">Manage books, users, and system settings</p>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
-                  <p className="text-red-800">
-                    Admin panel functionality would be implemented here with user management,
-                    book catalog management, and system analytics.
-                  </p>
-                </div>
-              </div>
+              <AdminPanel onBack={() => handleViewChange('library')} />
             )}
 
             {/* Unauthorized Access */}
-            {currentView === 'admin' && isAuthenticated && user?.role !== 'admin' && (
+            {currentView === 'admin' && (!isAuthenticated || user?.role !== 'admin') && (
               <div className="text-center py-12">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
                 <p className="text-gray-600 mb-8">You don't have permission to access the admin panel</p>
