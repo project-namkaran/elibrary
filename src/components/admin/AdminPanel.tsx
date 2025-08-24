@@ -15,6 +15,7 @@ import { AddBookForm } from './AddBookForm';
 import { BookManagement } from './BookManagement';
 import { UserManagement } from './UserManagement';
 import { SystemSettings } from './SystemSettings';
+import { AnalyticsDashboard } from './AnalyticsDashboard';
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -80,15 +81,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         <div className="p-6">
           {activeTab === 'books' && <BookManagement />}
           {activeTab === 'users' && <UserManagement />}
-          {activeTab === 'analytics' && (
-            <div className="text-center py-12">
-              <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Dashboard</h3>
-              <p className="text-gray-600">
-                Analytics and reporting functionality would be implemented here.
-              </p>
-            </div>
-          )}
+          {activeTab === 'analytics' && <AnalyticsDashboard />}
           {activeTab === 'settings' && <SystemSettings />}
         </div>
       </div>

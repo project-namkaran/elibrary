@@ -19,6 +19,8 @@ const AppContent: React.FC = () => {
 
   const { isAuthenticated } = useUser();
 
+  const { user } = useUser();
+
   const handleViewChange = (view: string) => {
     const authRequiredViews = ['dashboard', 'profile', 'exchange', 'settings'];
     const adminRequiredViews = ['admin'];
